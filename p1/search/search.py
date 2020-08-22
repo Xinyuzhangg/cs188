@@ -74,6 +74,17 @@ def tinyMazeSearch(problem):
     return [s, s, w, s, w, w, s, w]
 
 
+class Node:
+    def __init__(self, state, pred, action, priority=0):
+        self.state = state
+        self.pred = pred
+        self.action = action
+        self.priority = priority
+
+    def __repr__(self):
+        return "State: {0}, Action: {1}".format(self.state, self.action)
+
+
 def depthFirstSearch(problem):
     """
     Search the deepest nodes in the search tree first.
@@ -125,6 +136,30 @@ def aStarSearch(problem, heuristic=nullHeuristic):
 
     return get_solution(problem, fringe, True, heuristic)
 
+    """closed = set()
+    fringe = util.PriorityQueue()
+    start_state = problem.getStartState()
+    fringe.push(Node(start_state, None, None, \
+                     heuristic(start_state, problem)), \
+                heuristic(start_state, problem))
+    while fringe.isEmpty() is not True:
+        node = fringe.pop()
+        if problem.isGoalState(node.state) is True:
+            actions = list()
+            while node.action is not None:
+                actions.append(node.action)
+                node = node.pred
+            actions.reverse()
+            return actions
+        if node.state not in closed:
+            closed.add(node.state)
+            for s in problem.getSuccessors(node.state):
+                print(s[2] + node.priority + heuristic(s[0], problem))
+                fringe.push(Node(s[0], node, s[1], s[2] + node.priority), \
+                            s[2] + node.priority + \
+                            heuristic(s[0], problem))
+    return list()"""
+
 
 # Abbreviations
 bfs = breadthFirstSearch
@@ -134,50 +169,33 @@ ucs = uniformCostSearch
 
 
 def get_solution(problem, fringe, uni=False, heuristic=nullHeuristic):
-    states = []
-    closed = []
-
-    for init_node in problem.getSuccessors(problem.getStartState()):
-        if not uni:
-            fringe.push(init_node)
-        else:
-            stateCopy = states.copy()
-            stateCopy.append(init_node)
-            fringe.push(init_node,
-                        problem.getCostOfActions(get_path(problem, stateCopy))
-                        + heuristic(init_node[0], problem))
-
+    init_state = problem.getStartState()
+    closed = set()
+    solution = []
+    if uni:
+        fringe.push(Node(init_state, None, None, 0), 0)
+    else:
+        fringe.push(Node(init_state, None, None, 0))
     while not fringe.isEmpty():
         node = fringe.pop()
-        if problem.isGoalState(node[0]):
-            states.append(node)
-            return get_path(problem, states)
-        if node[0] not in closed:
-            closed.append(node[0])
-            states.append(node)
-            for node in problem.getSuccessors(node[0]):
-                if not uni:
-                    fringe.push(node)
+        if problem.isGoalState(node.state):
+            while node.pred:
+                solution.append(node.action)
+                node = node.pred
+            solution.reverse()
+            return solution
+        if node.state not in closed:
+            closed.add(node.state)
+            for s in problem.getSuccessors(node.state):
+                if uni:
+                    fringe.push(Node(s[0], node, s[1], s[2] + node.priority),
+                                s[2] + node.priority + heuristic(s[0], problem))
                 else:
-                    stateCopy = states.copy()
-                    stateCopy.append(node)
-                    fringe.push(node, problem.getCostOfActions(get_path(problem, stateCopy))
-                                + heuristic(node[0], problem))
-
-
-def get_path(problem, states):
-    solution = []
-    prev = states.pop()
-    last = prev
-    while states:
-        last = prev
-        prev = states.pop()
-        while last not in problem.getSuccessors(prev[0]) and states:
-            prev = states.pop()
-        solution.append(last[1])
-
-    if last not in problem.getSuccessors(problem.getStartState()):
-        solution.append(prev[1])
-    solution.reverse()
-
+                    fringe.push(Node(s[0], node, s[1], 1))
     return solution
+
+
+
+
+
+

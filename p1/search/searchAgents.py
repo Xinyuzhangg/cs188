@@ -431,8 +431,8 @@ def cornersHeuristic(state, problem):
     val = []
 
     for i in range(2, 6):
-        if  not state[i]:
-            s = corners[i-2]
+        if not state[i]:
+            s = corners[i - 2]
             val.append(abs(s[0] - state[0]) + abs(s[1] - state[1]))
 
     return max(val)
@@ -517,6 +517,7 @@ class NewState:
     def getPacmanPosition(self):
         return self.state[0]
 
+
 def foodHeuristic(state, problem):
     """
     Your heuristic for the FoodSearchProblem goes here.
@@ -557,6 +558,17 @@ def foodHeuristic(state, problem):
     return heuristic_value
 
 
+class Node:
+    def __init__(self, state, pred, action, priority=0):
+        self.state = state
+        self.pred = pred
+        self.action = action
+        self.priority = priority
+
+    def __repr__(self):
+        return "State: {0}, Action: {1}".format(self.state, self.action)
+
+
 class ClosestDotSearchAgent(SearchAgent):
     "Search for all food using a sequence of searches"
 
@@ -587,6 +599,27 @@ class ClosestDotSearchAgent(SearchAgent):
         problem = AnyFoodSearchProblem(gameState)
 
         "*** YOUR CODE HERE ***"
+        solution = []
+        closed = []
+        fringe = util.PriorityQueue()
+        init_node = Node(startPosition, None, None, 0)
+        fringe.push(init_node, 0)
+        while not fringe.isEmpty():
+            node = fringe.pop()
+            if problem.isGoalState(node.state):
+                while node.pred:
+                    solution.append(node.action)
+                    node = node.pred
+                solution.reverse()
+                return solution
+            if node.state not in closed:
+                closed.append(node.state)
+                for s in problem.getSuccessors(node.state):
+                    fringe.push(Node(s[0], node, s[1], s[2] + node.priority), s[2] + node.priority)
+        return solution
+
+
+
         util.raiseNotDefined()
 
 
@@ -624,10 +657,7 @@ class AnyFoodSearchProblem(PositionSearchProblem):
         x, y = state
 
         "*** YOUR CODE HERE ***"
-        if y.asLists():
-            return False
-        else:
-            return True
+        return self.food[x][y]
         util.raiseNotDefined()
 
 
